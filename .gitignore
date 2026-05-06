@@ -1,0 +1,28 @@
+# Arduino IDE cache and build artifacts
+.arduino15/
+Arduino/libraries/
+PickleScore_ThroatPod/build/
+PickleScore_Wristband/build/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# System
+.local/
+.cache/
+Bookshelf/
+Desktop/
+Documents/
+Downloads/
+Music/
+Pictures/
+Public/
+Templates/
+Videos/
+
+# Binaries / AppImages
+*.AppImage
+*.bin
+*.uf2
