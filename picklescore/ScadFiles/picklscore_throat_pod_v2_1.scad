@@ -2,23 +2,19 @@
 // PickleScore™ Throat Pod Enclosure — v4.0  2-BUTTON / LIPO
 // Parametric OpenSCAD model
 // ============================================================
-// WHAT'S NEW IN v2.0:
-//   - Tapered trapezoid body matching JOOLA Perseus throat taper
-//   - Top width 65mm (at USA Approved level), bottom 27mm (grip collar)
-//   - Height 65mm total — extends slightly above 25mm gap for fit
-//   - Slim 7mm total thickness (down from 9mm in v1)
-//   - XIAO nRF52840 oriented lengthwise (21mm along pod height)
-//   - CR2032 holder stacked above XIAO chip (vertical stack layout)
-//   - Clip arms at TOP of pod only (widest point, best grip)
-//   - Full-length VHB pad on back face for secondary adhesion
-//   - Buttons repositioned for tapered face geometry
+// WHAT'S NEW IN v4.0:
+//   - Height 24mm — XIAO long side (21mm) along pod height, USB-C at bottom wall
+//   - USB-C bottom wall (y-): cable exits toward grip, fully clear of clip arms
+//   - Clip gap updated to 7.5mm (measured JOOLA Perseus lip at top)
+//   - Bottom width 28mm (measured 24.5mm paddle center + wall clearance)
+//   - 2-button layout: Red (A) left, Blue (B) right — 0.8mm TPU membrane domes
+//   - LiPo 301225 stacked above XIAO in z — charges via USB-C through XIAO charger
+//   - VHB tape recess on back face for secondary adhesion
 // ============================================================
 // PHASE 2 NOTE:
-//   This design uses the Seeed XIAO nRF52840 (21×17.5mm)
-//   for prototype builds. Phase 3 production will swap to
-//   the Raytac MDBT50Q bare module (15.5×10.5×2mm) on a
-//   custom PCB — enabling a pod that fits entirely within
-//   the 25mm grip transition zone.
+//   Prototype uses Seeed XIAO nRF52840 (21×17.5mm).
+//   Phase 3 production: Raytac MDBT50Q bare module (15.5×10.5×2mm)
+//   on custom PCB — pod shrinks to fit entirely within throat zone.
 // ============================================================
 // PRINT SETTINGS:
 //   Material:      TPU 95A
@@ -39,9 +35,9 @@ SHOW = "bottom";   // "assembly" | "top" | "bottom"
 
 // ── Tapered body dimensions ──────────────────────────────────
 // Trapezoid: wide at top (paddle face level), narrow at bottom (grip)
-pod_h      = 30;    // mm — LiPo (25mm) + margins
-pod_top_w  = 34;    // mm — 2-button layout, verify against paddle throat
-pod_bot_w  = 27;    // mm — measured throat width
+pod_h      = 24;    // mm — XIAO long side (21mm) along height; needs 22mm + margin
+pod_top_w  = 47.0;  // mm — measured: 65mm total paddle width − 2×9mm lips at 24mm height
+pod_bot_w  = 28.0;  // mm — XIAO short side (17.5mm) along width; min ~21.6mm, 28mm verified fine
 pod_thk    = 11;    // mm — floor(1.2) + XIAO(4) + LiPo(3.5) + top(1.8) stacked
 
 // ── Shell thicknesses ────────────────────────────────────────
@@ -51,7 +47,7 @@ bot_h    =  9;  // mm — floor(1.2) + XIAO(4) + LiPo(3.5) stacked
 floor_t  = 1.2;  // mm — bottom floor thickness
 
 // ── Clip arms (grip paddle edge — TOP of pod only) ───────────
-clip_gap    =  5.49; // mm — JOOLA Perseus edge guard height (measured)
+clip_gap    =  9.0;  // mm — JOOLA Perseus lip width at top of pod (measured at 24mm height)
 clip_len    = 10.0;  // mm — arm length reaching over edge
 clip_thk    =  1.8;  // mm — arm wall thickness
 clip_offset = 10.0;  // mm — inset from left/right ends at top
@@ -61,22 +57,22 @@ clip_offset = 10.0;  // mm — inset from left/right ends at top
 btn_A_x  =  -8;  btn_A_y =   5;  btn_A_r = 5.0;  // Red  (left)  — short press = A scores, long = undo, 3s = reset
 btn_B_x  =   8;  btn_B_y =   5;  btn_B_r = 5.0;  // Blue (right) — short press = B scores, long = undo, 3s = reset
 
-// ── XIAO nRF52840 pocket (oriented lengthwise) ───────────────
-// Board: 21mm long × 17.5mm wide × 3.5mm thick
-// Positioned in upper half of pod
-xiao_len  = 22.0;  // mm — board length + 0.5mm clearance
-xiao_wid  = 18.5;  // mm — board width + 1mm clearance
+// ── XIAO nRF52840 pocket (long side along pod height) ────────────────
+// Board: 21mm long × 17.5mm wide — long side runs along pod height (y)
+// USB-C faces bottom wall (y-)
+xiao_len  = 22.0;  // mm — board long side (21mm) + 1mm clearance, along pod height (y)
+xiao_wid  = 18.0;  // mm — board short side (17.5mm) + 0.5mm clearance, along pod width (x)
 xiao_thk  =  4.0;  // mm — board + component height
-xiao_y    =  0;  // mm — centered in pod
-xiao_x    =  0;  // mm — centered in pod
-usbc_w    =  9.0;  // mm — USB-C cutout width
-usbc_h    =  4.0;  // mm — USB-C cutout height
+xiao_y    =  0;    // mm — centered in pod
+xiao_x    =  0;    // mm — centered in pod
+usbc_w    =  9.0;  // mm — USB-C cutout width (along x)
+usbc_h    =  4.0;  // mm — USB-C cutout height (along z)
 
-// ── LiPo battery (stacked above XIAO in z) ───────────────────
-// Target: 301230 (3mm × 12mm × 30mm, ~90mAh)
+// ── LiPo battery (stacked above XIAO in z, rotated 90°) ──────────────
+// Target: 301225 (3mm × 12mm × 25mm, ~60mAh) — short 12mm side along pod height
 // XIAO nRF52840 has built-in LiPo charger — USB-C charges both
-lipo_len   = 26.0;  // mm — 25mm cell + 1mm clearance
-lipo_wid   = 13.0;  // mm — 12mm cell + 1mm clearance
+lipo_len   = 13.0;  // mm — cell short side (12mm) + 1mm clearance, along pod height (y)
+lipo_wid   = 26.0;  // mm — cell long side (25mm) + 1mm clearance, along pod width (x)
 lipo_thk   =  3.5;  // mm — 3mm cell + 0.5mm clearance
 lipo_y     =    0;  // mm — centered in pod
 lipo_x     =    0;  // mm — centered in pod
@@ -214,9 +210,9 @@ module bottom_shell() {
        translate([xiao_x - xiao_wid/2, xiao_y - xiao_len/2, floor_t - 0.1])
             cube([xiao_wid, xiao_len, xiao_thk + 0.1]);
 
-        // USB-C port — through top wall (programs XIAO + charges LiPo)
-        translate([xiao_x - usbc_w/2, pod_h/2 - wall_t - 0.1, floor_t + 0.5])
-            cube([usbc_w, wall_t + 0.3, usbc_h]);
+        // USB-C port — bottom wall, centered in x (cable exits toward grip)
+        translate([-usbc_w/2, -pod_h/2 - 0.1, floor_t + 0.5])
+            cube([usbc_w, wall_t + 2.0, usbc_h]);
 
         // LiPo pocket — above XIAO in z (stacked)
         translate([lipo_x - lipo_wid/2, lipo_y - lipo_len/2, floor_t + xiao_thk])
@@ -315,19 +311,21 @@ else                        assembly();
 // ============================================================
 // QUICK REFERENCE — Key dimensions  (v4.0)
 // ============================================================
-// Pod exterior:        34mm wide (top) → 27mm wide (bottom) × 30mm tall × 11mm thick
-// vs v2.1 original:    was 44 × 13mm × 38mm  (~52% volume reduction)
-// Taper follows:       JOOLA Perseus throat — verify pod_top_w against your paddle
+// Pod exterior:        47mm wide (top) → 28mm wide (bottom) × 24mm tall × 11mm thick
+// Taper follows:       JOOLA Perseus throat — measured: 65mm total × 9mm lips at top; 28mm at bottom
+// Lips:                9mm at top (measured at 24mm height) — clip arms span full lip width
+// Components:          XIAO long side (21mm) along pod height; USB-C at bottom wall (y-)
+// USB-C:               Bottom wall, centered — cable exits toward grip, fully clear of clip arms
 // Button layout:       2-button — Red (left) Blue (right), centered on face
 //   Short press:       score for that team
 //   Hold ≥ 1.5s:       undo last point
 //   Hold ≥ 3.0s:       reset game
-// Clip arms:           TOP of pod only — clips over 5.49mm edge guard (measured)
+// Clip arms:           TOP of pod only — clips over 7.5mm lip (measured; bottom lip is 6.4mm)
 // VHB recess:          Full-length back face, 0.8mm deep
-// XIAO nRF52840:       22 × 18.5 × 4mm pocket (z: floor to floor+4mm)
-// LiPo battery:        13 × 26 × 3.5mm pocket (z: floor+4mm to floor+7.5mm, stacked above XIAO)
-//   Recommended cell:  251225  (2.5mm × 12mm × 25mm, ~60mAh) or 301225 (~80mAh)
-// USB-C cutout:        9 × 4mm through TOP wall — programs XIAO + charges LiPo
+// XIAO nRF52840:       18 × 22 × 4mm pocket (z: floor to floor+4mm); long side along y, USB-C at bottom
+// LiPo battery:        26 × 13 × 3.5mm pocket (z: floor+4mm to floor+7.5mm, stacked above XIAO)
+//   Recommended cell:  301225 (3mm × 12mm × 25mm, ~60mAh)
+// USB-C cutout:        9 × 4mm through BOTTOM wall (y-) — programs XIAO + charges LiPo
 // Assembly:            4× M1.6 screws (corner positions adapt to taper)
 // Material:            TPU 95A recommended (flexible, grippy clip arms)
 // Phase 2 chip:        Seeed XIAO nRF52840 (21 × 17.5mm)
