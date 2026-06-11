@@ -12,9 +12,9 @@
 //     Seeed XIAO ESP32-C3 + LiPo (charging built-in)
 //
 //   DESIGN = "slim"
-//     48 × 24 × 13mm — 0.91" SSD1306 128×32 OLED display
-//     Fitbit Inspire 3 form factor (39 × 18.6 × 11.75mm)
-//     Production target — Phase 3 with custom PCB
+//     42 × 22 × 12.5mm — 0.91" SSD1306 128×32 OLED display
+//     Fitbit Inspire 3 style (39 × 18.6 × 11.75mm reference)
+//     Integrated tapered lug caps, 20mm spring bars
 //
 // ============================================================
 // PRINT SETTINGS:
@@ -57,11 +57,11 @@ proto_fillet_r  =  4.0; // mm
 proto_vent_offset = 10; // mm
 
 // ── Slim profile — 0.91" SSD1306 OLED 128×32 ────────────────
-slim_body_len  = 48;   // mm — along arm; fits XIAO(21) + LiPo(25) stacked in z
-slim_body_wid  = 24;   // mm — across wrist; minimum for XIAO 17.5mm + walls
-slim_body_thk  = 13;   // mm — bot_h(9) + top_h(4) reference only
-slim_top_h     =  4.0; // mm — OLED + face plate
-slim_bot_h     =  9.0; // mm — floor(1.5) + XIAO(4) + LiPo(3.5) stacked
+slim_body_len  = 42;   // mm — along arm; OLED PCB(38) + 2×1.5mm walls + 1mm clearance
+slim_body_wid  = 22;   // mm — across wrist; XIAO(17.5) + 2×1.5mm walls + 0.5mm clearance
+slim_body_thk  = 12.5; // mm — bot_h(9.0) + top_h(3.5) reference only
+slim_top_h     =  3.5; // mm — OLED + face plate
+slim_bot_h     =  9.0; // mm — floor(1.2) + XIAO(4.0) + LiPo(3.5) + 0.3mm clearance
 slim_win_w     = 24;   // mm — 0.91" active area (128px direction)
 slim_win_h     =  8;   // mm — 0.91" active area (32px direction)
 slim_matrix_w  = 38;   // mm — 0.91" OLED PCB length (along arm)
@@ -94,9 +94,8 @@ fillet_r  = (DESIGN == "slim") ? slim_fillet_r  : proto_fillet_r;
 vent_offset=(DESIGN == "slim") ? slim_vent_offset: proto_vent_offset;
 
 // ── Shared parameters ────────────────────────────────────────
-wall_t    = 1.8;  // mm — outer wall (both profiles)
-floor_t   = 1.5;  // mm — bottom floor
-curve_sag = 2.5;  // mm — wrist concavity
+wall_t    = 1.5;  // mm — outer wall (both profiles)
+floor_t   = 1.2;  // mm — bottom floor
 win_r     = 2.5;  // mm — window corner radius
 win_recess= 0.5;  // mm — window recess depth
 
@@ -108,20 +107,16 @@ esp_thk   =  4.0; // XIAO + components clearance
 usbc_w    =  9.0; // mm — USB-C port opening width
 usbc_h    =  4.0; // mm — USB-C port opening height
 
-// ── Strap lugs (20mm quick-release) ──────────────────────────
-lug_wid    = 20;
-lug_outer  = 22;
-lug_thk    =  1.8;
-lug_h      =  3.5; // mm — match top_h
-lug_angle  =  0;
-bar_r      =  0.9;
-bar_offset =  4.0;
+// ── Strap lugs (20mm quick-release, integrated) ──────────────
+lug_wid    = 20;   // mm — spring bar span
+lug_ext    =  4.5; // mm — lug cap extension beyond body end
+bar_r      =  1.0; // mm — spring bar slot radius (slightly > 0.9mm pin for clearance)
 
-// ── Screw bosses (M1.6) ───────────────────────────────────────
-boss_r     = 1.8;
-boss_h     = 3.5;
+// ── Screw bosses (M1.6 × 5mm, screws enter from display face) ─
+boss_r     = 1.6;
+boss_h     = 3.0;
 screw_r    = 0.85;
-boss_inset = 4.5;
+boss_inset = 4.0;
 
 // ── Vent slots ────────────────────────────────────────────────
 vent_len = 8;
@@ -161,24 +156,12 @@ module screw_boss(x, y, z_base) {
 
 module top_shell() {
     difference() {
-        union() {
-            rounded_box(body_len, body_wid, top_h, fillet_r);
-            // Right lug
-            translate([body_len/2, -(lug_outer/2), 0])
-                cube([bar_offset + 2, lug_thk, lug_h]);
-            translate([body_len/2, (lug_outer/2 - lug_thk), 0])
-                cube([bar_offset + 2, lug_thk, lug_h]);
-            // Left lug
-            translate([-(body_len/2 + bar_offset + 2), -(lug_outer/2), 0])
-                cube([bar_offset + 2, lug_thk, lug_h]);
-            translate([-(body_len/2 + bar_offset + 2), (lug_outer/2 - lug_thk), 0])
-                cube([bar_offset + 2, lug_thk, lug_h]);
-        }
+        rounded_box(body_len, body_wid, top_h, fillet_r);
 
         // Interior hollow
         translate([0, 0, wall_t])
             rounded_box(body_len - 2*wall_t, body_wid - 2*wall_t,
-                        top_h, fillet_r - 1.2);
+                        top_h, fillet_r - wall_t);
 
         // Display window cutout
         translate([0, 0, -0.1])
@@ -188,33 +171,41 @@ module top_shell() {
         translate([0, 0, wall_t - win_recess])
             rounded_window(win_w + 1.5, win_h + 1.5, win_r + 0.8, win_recess + 0.2);
 
-        // USB-C removed from top shell — see bottom shell side wall
+        // Screw clearance holes — M1.6 screws enter from display face, self-tap into bottom bosses
+        for (bx = [-1,1], by = [-1,1])
+            translate([bx*(body_len/2 - boss_inset),
+                       by*(body_wid/2 - boss_inset), -0.1])
+                cylinder(r=screw_r + 0.1, h=wall_t + 0.2, $fn=16);
     }
-
-    // Screw bosses
-    screw_boss(-body_len/2 + boss_inset, -body_wid/2 + boss_inset, wall_t);
-    screw_boss( body_len/2 - boss_inset, -body_wid/2 + boss_inset, wall_t);
-    screw_boss(-body_len/2 + boss_inset,  body_wid/2 - boss_inset, wall_t);
-    screw_boss( body_len/2 - boss_inset,  body_wid/2 - boss_inset, wall_t);
 }
 
 // ============================================================
 // BOTTOM SHELL
 // ============================================================
 
+// Integrated spring bar lug cap (one end, +x side; mirror for -x)
+module _lug_cap() {
+    root_hw = body_wid / 2;  // lug root = full body width
+    hull() {
+        translate([body_len/2, -root_hw, 0])
+            cube([0.1, 2*root_hw, bot_h]);
+        translate([body_len/2 + lug_ext - 0.1, -lug_wid/2, 0.5])
+            cube([0.1, lug_wid, bot_h - 1]);
+    }
+}
+
 module bottom_shell() {
     difference() {
-        rounded_box(body_len, body_wid, bot_h, fillet_r);
+        union() {
+            rounded_box(body_len, body_wid, bot_h, fillet_r);
+            _lug_cap();
+            mirror([1, 0, 0]) _lug_cap();
+        }
 
         // Interior hollow
         translate([0, 0, floor_t])
             rounded_box(body_len - 2*wall_t, body_wid - 2*wall_t,
-                        bot_h, fillet_r - 1.2);
-
-        // Concave wrist curve
-        translate([0, 0, -(curve_sag * 20 - curve_sag)])
-            scale([1, body_len / (body_len + 10), 1])
-                sphere(r = curve_sag * 20, $fn=64);
+                        bot_h, fillet_r - wall_t);
 
         // XIAO ESP32-C3 pocket
         translate([-esp_len/2, -esp_wid/2, floor_t - 0.1])
@@ -228,12 +219,21 @@ module bottom_shell() {
         translate([-usbc_w/2, body_wid/2 - wall_t - 0.1, floor_t + 0.5])
             cube([usbc_w, wall_t + 0.3, usbc_h]);
 
-        // Screw holes
-        for (bx = [-1,1], by = [-1,1])
-            translate([bx*(body_len/2 - boss_inset),
-                       by*(body_wid/2 - boss_inset), -0.1])
-                cylinder(r=screw_r, h=floor_t + 0.2, $fn=16);
+        // Spring bar slots through lug caps
+        for (xs = [-1, 1])
+            translate([xs * (body_len/2 + lug_ext/2), 0, bot_h/2])
+                rotate([0, 90, 0])
+                    cylinder(r=bar_r, h=lug_wid + 4, center=true, $fn=24);
     }
+
+    // Screw bosses — receive M1.6×5mm screws from display face
+    for (bx = [-1,1], by = [-1,1])
+        translate([bx*(body_len/2 - boss_inset),
+                   by*(body_wid/2 - boss_inset), floor_t])
+            difference() {
+                cylinder(r=boss_r, h=boss_h, $fn=24);
+                cylinder(r=screw_r, h=boss_h+0.1, $fn=18);
+            }
 }
 
 // ============================================================
@@ -253,7 +253,7 @@ module assembly() {
         translate([0, 0, bot_h + wall_t - win_recess])
             rounded_window(win_w, win_h, win_r, 1.2);
 
-    // Display (LED matrix or OLED)
+    // OLED PCB
     color("ForestGreen", 0.8)
         translate([0, 0, bot_h + wall_t])
             cube([matrix_w, matrix_h, matrix_thk], center=true);
@@ -267,6 +267,13 @@ module assembly() {
     color("Goldenrod", 0.75)
         translate([0, 0, floor_t + esp_thk + batt_thk/2])
             cube([batt_len, batt_wid, batt_thk], center=true);
+
+    // Spring bars (reference — 20mm quick-release pins)
+    color("Silver", 0.9)
+        for (xs = [-1, 1])
+            translate([xs * (body_len/2 + lug_ext/2), 0, bot_h/2])
+                rotate([0, 90, 0])
+                    cylinder(r=bar_r - 0.1, h=lug_wid, center=true, $fn=16);
 }
 
 // ============================================================
@@ -288,20 +295,19 @@ else                       assembly();
 //   ESP32:       SuperMini 22.5 × 18mm ← MEASURE YOURS, update esp_len/esp_wid
 //
 // SLIM profile (DESIGN = "slim"):
-//   Body:        48 × 24 × 13mm  (along arm × across wrist × thick)
-//   Window:      24 × 8mm  ← 0.91" 128×32 active area
+//   Body:        42 × 22 × 12.5mm  (along arm × across wrist × thick)
+//   Window:      24 × 8mm  ← 0.91" 128×32 active area (landscape)
 //   Display:     0.91" SSD1306 OLED 128×32 — PCB 38×12mm, pins on short end
 //   Battery:     301230 LiPo (3mm × 12mm × 30mm, ~90mAh) stacked above XIAO
 //   XIAO:        ESP32-C3, 21×17.5mm — built-in LiPo charging via USB-C
 //   USB-C:       Side wall (body_wid face) — programs + charges
-//   Straps:      20mm quick-release spring bars
+//   Straps:      20mm quick-release spring bars (integrated tapered lug caps)
 //   Material:    TPU 95A recommended
-//   Assembly:    4× M1.6 screws
+//   Assembly:    4× M1.6 × 5mm screws — enter from display face, self-tap into bottom bosses
 //
 // SHARED:
-//   Straps:      20mm quick-release spring bars
-//   Assembly:    4× M1.6 screws
-//   Wall:        1.8mm all sides
+//   Wall:        1.5mm all sides
+//   Floor:       1.2mm
 //   Wrist curve: 2.5mm concavity
-//   USB-C:       9 × 4mm, right side
+//   USB-C:       9 × 4mm, right side (+y wall)
 // ============================================================

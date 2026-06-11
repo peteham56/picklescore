@@ -38,13 +38,13 @@ SHOW = "bottom";   // "assembly" | "top" | "bottom"
 pod_h      = 24;    // mm — XIAO long side (21mm) along height; needs 22mm + margin
 pod_top_w  = 47.0;  // mm — measured: 65mm total paddle width − 2×9mm lips at 24mm height
 pod_bot_w  = 28.0;  // mm — XIAO short side (17.5mm) along width; min ~21.6mm, 28mm verified fine
-pod_thk    = 11;    // mm — floor(1.2) + XIAO(4) + LiPo(3.5) + top(1.8) stacked
+pod_thk    = 11.3;  // mm — floor(1.5) + XIAO(4) + LiPo(3.5) + top(1.8) stacked
 
 // ── Shell thicknesses ────────────────────────────────────────
 wall_t   = 1.8;  // mm — outer wall thickness all sides
 top_t    = 1.8;  // mm — button face shell thickness
 bot_h    =  9;  // mm — floor(1.2) + XIAO(4) + LiPo(3.5) stacked
-floor_t  = 1.2;  // mm — bottom floor thickness
+floor_t  = 1.5;  // mm — bottom floor thickness (leaves 1.1mm under VHB recess)
 
 // ── Clip arms (grip paddle edge — TOP of pod only) ───────────
 clip_gap    =  9.0;  // mm — JOOLA Perseus lip width at top of pod (measured at 24mm height)
@@ -80,11 +80,11 @@ lipo_x     =    0;  // mm — centered in pod
 // ── VHB adhesive pad recess (full back face) ─────────────────
 // Slightly inset from edges for clean appearance
 pad_margin = 4;    // mm — margin from pod edge
-pad_depth  = 0.8;  // mm — recess depth
+pad_depth  = 0.4;  // mm — recess depth (0.4mm leaves 0.8mm floor, no fiber bleed-through)
 
 // ── Screw bosses (M1.6) ──────────────────────────────────────
 boss_r     = 1.8;
-boss_h     = 3.0;
+boss_h     = 7.5;  // reaches near parting plane so top-entry screws engage immediately
 screw_r    = 0.85;
 boss_inset_x = 5.0;  // mm from left/right edge
 boss_inset_y = 5.0;  // mm from top/bottom edge
@@ -170,6 +170,13 @@ module top_shell() {
         translate([btn_B_x, btn_B_y, 0.8])
             cylinder(r=btn_B_r, h=top_t + 2.6, $fn=32);
 
+        // Screw clearance holes — M1.6 screws enter from button face, self-tap into bottom bosses
+        for (sx = [-1, 1]) {
+            translate([sx*(pod_top_w/2 - boss_inset_x),  pod_h/2 - boss_inset_y, -0.1])
+                cylinder(r=screw_r + 0.1, h=top_t + 1.6 + 0.2, $fn=16);
+            translate([sx*(pod_bot_w/2 - boss_inset_x), -(pod_h/2 - boss_inset_y), -0.1])
+                cylinder(r=screw_r + 0.1, h=top_t + 1.6 + 0.2, $fn=16);
+        }
     }
 }
 
@@ -234,13 +241,6 @@ module bottom_shell() {
                 }
         }
 
-        // Screw holes (4 corners matched to top shell bosses)
-        for (sx=[-1,1]) {
-            translate([sx*(pod_top_w/2 - boss_inset_x), pod_h/2 - boss_inset_y, -0.1])
-                cylinder(r=screw_r, h=floor_t+0.2, $fn=16);
-            translate([sx*(pod_bot_w/2 - boss_inset_x), -(pod_h/2 - boss_inset_y), -0.1])
-                cylinder(r=screw_r, h=floor_t+0.2, $fn=16);
-        }
     }
 
     // Screw bosses at 4 corners (adapting to taper)
@@ -321,12 +321,12 @@ else                        assembly();
 //   Hold ≥ 1.5s:       undo last point
 //   Hold ≥ 3.0s:       reset game
 // Clip arms:           TOP of pod only — clips over 7.5mm lip (measured; bottom lip is 6.4mm)
-// VHB recess:          Full-length back face, 0.8mm deep
+// VHB recess:          Full-length back face, 0.4mm deep (0.8mm floor remaining)
 // XIAO nRF52840:       18 × 22 × 4mm pocket (z: floor to floor+4mm); long side along y, USB-C at bottom
 // LiPo battery:        26 × 13 × 3.5mm pocket (z: floor+4mm to floor+7.5mm, stacked above XIAO)
 //   Recommended cell:  301225 (3mm × 12mm × 25mm, ~60mAh)
 // USB-C cutout:        9 × 4mm through BOTTOM wall (y-) — programs XIAO + charges LiPo
-// Assembly:            4× M1.6 screws (corner positions adapt to taper)
+// Assembly:            4× M1.6 × 6mm screws — enter from button face, self-tap into bottom bosses (7.5mm tall)
 // Material:            TPU 95A recommended (flexible, grippy clip arms)
 // Phase 2 chip:        Seeed XIAO nRF52840 (21 × 17.5mm)
 // Phase 3 chip:        Raytac MDBT50Q (15.5 × 10.5 × 2mm) — custom PCB
