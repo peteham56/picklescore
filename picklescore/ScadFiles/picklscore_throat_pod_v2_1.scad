@@ -11,6 +11,14 @@
 //   - LiPo 301225 stacked above XIAO in z — charges via USB-C through XIAO charger
 //   - VHB tape recess on back face for secondary adhesion
 // ============================================================
+// v4.1 FIX (found before 3rd reprint):
+//   - bot_h (=floor+XIAO+LiPo) left NO room for the 5mm switches — the
+//     LiPo pocket's top surface was flush with the button membrane, so a
+//     seated switch would sit directly on top of the battery pouch.
+//   - Fix: raised bosses (btn_boss_h=4mm) added under each button so the
+//     switch cavity sits clear of the LiPo stack, without thickening the
+//     rest of the (slim) pod.
+// ============================================================
 // PHASE 2 NOTE:
 //   Prototype uses Seeed XIAO nRF52840 (21×17.5mm).
 //   Phase 3 production: Raytac MDBT50Q bare module (15.5×10.5×2mm)
@@ -31,7 +39,7 @@
 //   SHOW = "bottom"      — bottom shell only (export STL)
 // ============================================================
 
-SHOW = "bottom";   // "assembly" | "top" | "bottom"
+SHOW = "top";   // "assembly" | "top" | "bottom"
 
 // ── Tapered body dimensions ──────────────────────────────────
 // Trapezoid: wide at top (paddle face level), narrow at bottom (grip)
@@ -43,6 +51,7 @@ pod_thk    = 11.3;  // mm — floor(1.5) + XIAO(4) + LiPo(3.5) + top(1.8) stacke
 // ── Shell thicknesses ────────────────────────────────────────
 wall_t   = 1.8;  // mm — outer wall thickness all sides
 top_t    = 1.8;  // mm — button face shell thickness
+top_rim_h = 1.5;  // mm — perimeter wall height above top_t (edge strength at hidden seam; screw holes here are clearance-only, not threaded)
 bot_h    =  9;  // mm — floor(1.2) + XIAO(4) + LiPo(3.5) stacked
 floor_t  = 1.5;  // mm — bottom floor thickness (leaves 1.1mm under VHB recess)
 
@@ -56,6 +65,29 @@ clip_offset = 10.0;  // mm — inset from left/right ends at top
 // Positioned in upper portion of pod face, centered
 btn_A_x  =  -8;  btn_A_y =   5;  btn_A_r = 5.0;  // Red  (left)  — short press = A scores, long = undo, 3s = reset
 btn_B_x  =   8;  btn_B_y =   5;  btn_B_r = 5.0;  // Blue (right) — short press = B scores, long = undo, 3s = reset
+
+// ── Button boss (raised turret over each button) ─────────────
+// Button footprint sits directly over the LiPo pocket (bot_h is sized
+// exactly floor+XIAO+LiPo, with no allowance for switch height) — this
+// raises the switch cavity clear of the battery instead of growing the
+// whole pod's thickness.
+// Sized for a 3.5mm-tall tactile switch (was 5mm) — lower-profile part,
+// purchase 6x6x3.5mm switches to replace the 6x6x5mm ones on hand.
+btn_switch_h = 3.5;  // mm — tactile switch height (was 5.0mm)
+btn_boss_h = 2.5;  // mm — extra height added above the main shell face (was 4.0mm)
+btn_boss_r = 6.5;  // mm — boss outer radius (btn_r + 1.5mm wall)
+btn_boss_total_h = top_t + top_rim_h + btn_boss_h;  // full boss height from shell base (z=0)
+btn_dome_cap_h = 1.2;  // mm — height of the rounded "bubble" cap (flattened, not a full ball)
+btn_membrane_t  = 0.8;  // mm — membrane thickness left at the boss tip (user-press surface)
+btn_seat_clear  = 0.2;  // mm — clearance above switch body before membrane (fit tolerance/glue)
+btn_wire_bore_r = 2.5;  // mm — narrow bore below the seat, open to the interior, for wire leads
+// Switch cavity is a counterbore, open at the base (parting line) so the switch
+// can be dropped in from inside during assembly:
+//   - wire bore (r=btn_wire_bore_r): z=0 (open to interior) up to the seat
+//   - switch bore (r=btn_r): from the seat up to the membrane — switch drops in,
+//     rests on the shoulder, and its top lands snug against the membrane underside
+btn_switch_bore_h = btn_switch_h + btn_seat_clear;  // depth of switch-body bore, directly under membrane
+btn_seat_z = btn_boss_total_h - btn_membrane_t - btn_switch_bore_h;  // z height of the shoulder
 
 // ── XIAO nRF52840 pocket (long side along pod height) ────────────────
 // Board: 21mm long × 17.5mm wide — long side runs along pod height (y)
@@ -150,25 +182,54 @@ module screw_boss(x, y, z_base) {
         }
 }
 
+// Rounded "bubble" button boss — cylindrical wall + gently flattened dome cap
+// (not a full hemisphere — dome_cap_h keeps it a soft bump, not a ball)
+module bubble_boss(r, total_h, dome_cap_h) {
+    cyl_h = total_h - dome_cap_h;
+    union() {
+        cylinder(r=r, h=cyl_h, $fn=48);
+        translate([0, 0, cyl_h])
+            scale([1, 1, dome_cap_h / r])
+                sphere(r=r, $fn=48);
+    }
+}
+
 // ============================================================
 // TOP SHELL (button face)
 // ============================================================
 module top_shell() {
     difference() {
-        // Outer tapered body
-        tapered_body(top_t + 1.5);
+        union() {
+            // Outer tapered body, interior hollowed out first — bosses are added
+            // below (outside this inner difference) so the hollow cut can't eat
+            // into them, since their (x,y) sits over the hollowed interior area.
+            difference() {
+                tapered_body(top_t + top_rim_h);
 
-        // Interior hollow
-        translate([0, 0, top_t])
-            tapered_hollow(top_t + 2);
+                // Interior hollow
+                translate([0, 0, top_t])
+                    tapered_hollow(top_t + 2);
+            }
 
-        // Button A — 0.8mm TPU membrane dome (tactile switch presses from inside)
-        translate([btn_A_x, btn_A_y, 0.8])
-            cylinder(r=btn_A_r, h=top_t + 2.6, $fn=32);
+            // Raised bubble bosses — lift switch cavities clear of the LiPo stack below
+            translate([btn_A_x, btn_A_y, 0])
+                bubble_boss(btn_boss_r, btn_boss_total_h, btn_dome_cap_h);
+            translate([btn_B_x, btn_B_y, 0])
+                bubble_boss(btn_boss_r, btn_boss_total_h, btn_dome_cap_h);
+        }
 
-        // Button B — 0.8mm TPU membrane dome
-        translate([btn_B_x, btn_B_y, 0.8])
-            cylinder(r=btn_B_r, h=top_t + 2.6, $fn=32);
+        // Button A — counterbore: wire bore open to interior, switch seats on the
+        // shoulder, top of switch lands snug under the 0.8mm membrane at the tip
+        translate([btn_A_x, btn_A_y, 0])
+            cylinder(r=btn_wire_bore_r, h=btn_seat_z, $fn=24);
+        translate([btn_A_x, btn_A_y, btn_seat_z])
+            cylinder(r=btn_A_r, h=btn_switch_bore_h, $fn=32);
+
+        // Button B — same counterbore
+        translate([btn_B_x, btn_B_y, 0])
+            cylinder(r=btn_wire_bore_r, h=btn_seat_z, $fn=24);
+        translate([btn_B_x, btn_B_y, btn_seat_z])
+            cylinder(r=btn_B_r, h=btn_switch_bore_h, $fn=32);
 
         // Screw clearance holes — M1.6 screws enter from button face, self-tap into bottom bosses
         for (sx = [-1, 1]) {
@@ -264,12 +325,12 @@ module assembly() {
         translate([0, 0, 0])
             bottom_shell();
 
-    // Tactile switches — 6×6×5mm, seated under membrane domes
+    // Tactile switches — 6×6×3.5mm, seated on the boss counterbore shoulder
     color("DimGray", 0.9) {
-        translate([btn_A_x - 3, btn_A_y - 3, bot_h + 0.8])
-            cube([6, 6, 5]);
-        translate([btn_B_x - 3, btn_B_y - 3, bot_h + 0.8])
-            cube([6, 6, 5]);
+        translate([btn_A_x - 3, btn_A_y - 3, bot_h + btn_seat_z])
+            cube([6, 6, btn_switch_h]);
+        translate([btn_B_x - 3, btn_B_y - 3, bot_h + btn_seat_z])
+            cube([6, 6, btn_switch_h]);
     }
 
     // XIAO nRF52840 board
