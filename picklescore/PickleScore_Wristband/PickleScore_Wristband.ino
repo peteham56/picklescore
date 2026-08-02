@@ -16,6 +16,10 @@ int score_b = 0;
 char serving = 'A';
 int server = 2;
 volatile bool score_dirty = false;
+volatile bool real_change = false;
+bool display_asleep = false;
+unsigned long last_change_ms = 0;
+const unsigned long SLEEP_TIMEOUT_MS = 180000UL;  // 3 min of no score/serve change -> sleep OLED
 
 bool gameWon() {
   if (score_a >= 11 && score_a - score_b >= 2) return true;
@@ -66,6 +70,9 @@ class MyScanCallbacks: public NimBLEScanCallbacks {
         int sa, sb, sn;
         char sv;
         if (sscanf(payload, "%d,%d,%c,%d", &sa, &sb, &sv, &sn) == 4) {
+          if (sa != score_a || sb != score_b || sv != serving || sn != server) {
+            real_change = true;
+          }
           score_a = sa;
           score_b = sb;
           serving = sv;
@@ -85,6 +92,7 @@ void setup() {
     while (1);
   }
   showScore();
+  last_change_ms = millis();
   NimBLEDevice::init("");
   NimBLEScan* pScan = NimBLEDevice::getScan();
   pScan->setScanCallbacks(new MyScanCallbacks());
@@ -97,9 +105,22 @@ void setup() {
 }
 
 void loop() {
+  if (real_change) {
+    real_change = false;
+    last_change_ms = millis();
+    if (display_asleep) {
+      display.ssd1306_command(SSD1306_DISPLAYON);
+      display_asleep = false;
+    }
+  }
+
   if (score_dirty) {
     score_dirty = false;
-    showScore();
+    if (!display_asleep) showScore();
+  } else if (!display_asleep && millis() - last_change_ms > SLEEP_TIMEOUT_MS) {
+    display.ssd1306_command(SSD1306_DISPLAYOFF);
+    display_asleep = true;
   }
+
   delay(100);
 }
