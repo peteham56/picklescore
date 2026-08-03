@@ -63,8 +63,17 @@ clip_offset = 10.0;  // mm — inset from left/right ends at top
 
 // ── Button hole1s (inverted-triangle on tapered face) ─────────
 // Positioned in upper portion of pod face, centered
-btn_A_x  =  -8;  btn_A_y =   5;  btn_A_r = 5.0;  // Red  (left)  — short press = A scores, long = undo, 3s = reset
-btn_B_x  =   8;  btn_B_y =   5;  btn_B_r = 5.0;  // Blue (right) — short press = B scores, long = undo, 3s = reset
+btn_A_x  =  -8;  btn_A_y =   5;  // Red  (left)  — short press = A scores, long = undo, 3s = reset
+btn_B_x  =   8;  btn_B_y =   5;  // Blue (right) — short press = B scores, long = undo, 3s = reset
+
+// Switch cavity footprint (stadium: two hulled circles) — sized for the
+// Same Sky TS40 SMD switch's actual solderable footprint (gull-wing legs
+// splayed past the 6x6mm body), per datasheet recommended pad layout:
+// 10.0mm x 5.6mm envelope. A plain r=5.0mm round bore (fit only to the
+// 6x6mm body) clips the leg corners by ~0.8mm — this replaces it.
+btn_cav_r        = 3.1;  // mm — stadium end-cap radius (= half the 6.2mm short dimension, incl. tolerance)
+btn_cav_x_offset = 2.1;  // mm — offset of each end-cap center from button center (long axis = x)
+                          //      total length = 2*btn_cav_x_offset + 2*btn_cav_r = 10.4mm
 
 // ── Button boss (raised turret over each button) ─────────────
 // Button footprint sits directly over the LiPo pocket (bot_h is sized
@@ -75,19 +84,20 @@ btn_B_x  =   8;  btn_B_y =   5;  btn_B_r = 5.0;  // Blue (right) — short press
 // purchase 6x6x3.5mm switches to replace the 6x6x5mm ones on hand.
 btn_switch_h = 3.5;  // mm — tactile switch height (was 5.0mm)
 btn_boss_h = 2.5;  // mm — extra height added above the main shell face (was 4.0mm)
-btn_boss_r = 6.5;  // mm — boss outer radius (btn_r + 1.5mm wall)
+btn_boss_r = 7.0;  // mm — boss outer radius (clears the 10.4mm-long stadium cavity's end tips by ~1.8mm wall)
 btn_boss_total_h = top_t + top_rim_h + btn_boss_h;  // full boss height from shell base (z=0)
 btn_dome_cap_h = 1.2;  // mm — height of the rounded "bubble" cap (flattened, not a full ball)
 btn_membrane_t  = 0.8;  // mm — membrane thickness left at the boss tip (user-press surface)
 btn_seat_clear  = 0.2;  // mm — clearance above switch body before membrane (fit tolerance/glue)
-btn_wire_bore_r = 2.5;  // mm — narrow bore below the seat, open to the interior, for wire leads
-// Switch cavity is a counterbore, open at the base (parting line) so the switch
-// can be dropped in from inside during assembly:
-//   - wire bore (r=btn_wire_bore_r): z=0 (open to interior) up to the seat
-//   - switch bore (r=btn_r): from the seat up to the membrane — switch drops in,
-//     rests on the shoulder, and its top lands snug against the membrane underside
+// Switch cavity is uniformly switch-width for its FULL depth, open at the
+// base (parting line, z=0) so the switch can be dropped in from inside
+// during assembly and slides straight up until its top lands snug against
+// the membrane underside — no narrower choke point anywhere along the path.
+// (Previously had a narrow "wire bore" stage below a wider switch pocket —
+// backwards for an SMD switch inserted whole, not through a pin hole.)
 btn_switch_bore_h = btn_switch_h + btn_seat_clear;  // depth of switch-body bore, directly under membrane
-btn_seat_z = btn_boss_total_h - btn_membrane_t - btn_switch_bore_h;  // z height of the shoulder
+btn_seat_z = btn_boss_total_h - btn_membrane_t - btn_switch_bore_h;  // z height where the switch body starts (visual/position reference only, no shoulder)
+btn_cavity_total_h = btn_seat_z + btn_switch_bore_h;  // full open cavity height, z=0 up to just under the membrane
 
 // ── XIAO nRF52840 pocket (long side along pod height) ────────────────
 // Board: 21mm long × 17.5mm wide — long side runs along pod height (y)
@@ -182,6 +192,15 @@ module screw_boss(x, y, z_base) {
         }
 }
 
+// Switch-body cavity footprint — stadium shape (hull of two circles) sized
+// to the TS40's actual 10.0x5.6mm SMD leg footprint, not just the 6x6mm body.
+module switch_cavity(h) {
+    hull() {
+        translate([-btn_cav_x_offset, 0, 0]) cylinder(r=btn_cav_r, h=h, $fn=32);
+        translate([ btn_cav_x_offset, 0, 0]) cylinder(r=btn_cav_r, h=h, $fn=32);
+    }
+}
+
 // Rounded "bubble" button boss — cylindrical wall + gently flattened dome cap
 // (not a full hemisphere — dome_cap_h keeps it a soft bump, not a ball)
 module bubble_boss(r, total_h, dome_cap_h) {
@@ -200,16 +219,13 @@ module bubble_boss(r, total_h, dome_cap_h) {
 module top_shell() {
     difference() {
         union() {
-            // Outer tapered body, interior hollowed out first — bosses are added
-            // below (outside this inner difference) so the hollow cut can't eat
-            // into them, since their (x,y) sits over the hollowed interior area.
-            difference() {
-                tapered_body(top_t + top_rim_h);
-
-                // Interior hollow
-                translate([0, 0, top_t])
-                    tapered_hollow(top_t + 2);
-            }
+            // Outer tapered body — solid slab, full height (top_t + top_rim_h).
+            // Previously this had a hollow ring cut into the top_rim_h portion
+            // (pure material savings); filled solid per user request so the
+            // rim is as solid as the shell around it — no height change, no
+            // overlap with the bottom shell (rim sits entirely above bot_h,
+            // world Z 10.8-12.3mm, well clear of the component cavity below).
+            tapered_body(top_t + top_rim_h);
 
             // Raised bubble bosses — lift switch cavities clear of the LiPo stack below
             translate([btn_A_x, btn_A_y, 0])
@@ -218,18 +234,14 @@ module top_shell() {
                 bubble_boss(btn_boss_r, btn_boss_total_h, btn_dome_cap_h);
         }
 
-        // Button A — counterbore: wire bore open to interior, switch seats on the
-        // shoulder, top of switch lands snug under the 0.8mm membrane at the tip
+        // Button A — full-width cavity, open at the interior (z=0), switch
+        // drops straight in and slides up until it lands snug under the membrane
         translate([btn_A_x, btn_A_y, 0])
-            cylinder(r=btn_wire_bore_r, h=btn_seat_z, $fn=24);
-        translate([btn_A_x, btn_A_y, btn_seat_z])
-            cylinder(r=btn_A_r, h=btn_switch_bore_h, $fn=32);
+            switch_cavity(btn_cavity_total_h);
 
-        // Button B — same counterbore
+        // Button B — same
         translate([btn_B_x, btn_B_y, 0])
-            cylinder(r=btn_wire_bore_r, h=btn_seat_z, $fn=24);
-        translate([btn_B_x, btn_B_y, btn_seat_z])
-            cylinder(r=btn_B_r, h=btn_switch_bore_h, $fn=32);
+            switch_cavity(btn_cavity_total_h);
 
         // Screw clearance holes — M1.6 screws enter from button face, self-tap into bottom bosses
         for (sx = [-1, 1]) {
