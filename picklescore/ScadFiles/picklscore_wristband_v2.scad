@@ -12,7 +12,12 @@
 //     Seeed XIAO ESP32-C3 + LiPo (charging built-in)
 //
 //   DESIGN = "slim"
-//     42 × 22 × 12.5mm — 0.91" SSD1306 128×32 OLED display
+//     42 × 27 × 15.8mm — 0.91" SSD1306 128×32 OLED display
+//     (widened from 22mm/thickened from 12.5mm 2026-08-03 — measured XIAO
+//     ESP32-C3 + LiPo + OLED stack and USB-C connector length both exceeded
+//     original budget; board rotated 90° so its length runs across-wrist to
+//     reach the USB-C cutout without fighting the integrated lug caps at
+//     the X ends — see in-code comments below)
 //     Fitbit Inspire 3 style (39 × 18.6 × 11.75mm reference)
 //     Integrated tapered lug caps, 20mm spring bars
 //
@@ -57,16 +62,23 @@ proto_fillet_r  =  4.0; // mm
 proto_vent_offset = 10; // mm
 
 // ── Slim profile — 0.91" SSD1306 OLED 128×32 ────────────────
+// Measured 2026-08-03: XIAO board 21.11mm (PCB) / 22.39mm (incl. USB-C
+// connector) long × ~17.5mm wide; flat chip+LiPo+OLED stack 12.5mm;
+// OLED module itself 3.54mm thick (incl. back pads) — all larger than
+// the original budget below, which is why body_wid/body_thk grew.
 slim_body_len  = 42;   // mm — along arm; OLED PCB(38) + 2×1.5mm walls + 1mm clearance
-slim_body_wid  = 22;   // mm — across wrist; XIAO(17.5) + 2×1.5mm walls + 0.5mm clearance
-slim_body_thk  = 12.5; // mm — bot_h(9.0) + top_h(3.5) reference only
-slim_top_h     =  3.5; // mm — OLED + face plate
-slim_bot_h     =  9.0; // mm — floor(1.2) + XIAO(4.0) + LiPo(3.5) + 0.3mm clearance
+slim_body_wid  = 27;   // mm — across wrist; XIAO now rotated 90° so its 22.39mm
+                        // length (incl. USB-C connector) runs this direction to
+                        // reach the USB-C cutout on this wall (X ends are occupied
+                        // by the integrated spring-bar lug caps, no room for a port there)
+slim_body_thk  = 15.8; // mm — bot_h(10.5) + top_h(5.3) reference only
+slim_top_h     =  5.3; // mm — wall_t(1.5) + OLED module(3.6) + 0.2mm clearance
+slim_bot_h     = 10.5; // mm — floor(1.2) + XIAO(5.5) + LiPo(3.5) + 0.3mm clearance
 slim_win_w     = 24;   // mm — 0.91" active area (128px direction)
 slim_win_h     =  8;   // mm — 0.91" active area (32px direction)
 slim_matrix_w  = 38;   // mm — 0.91" OLED PCB length (along arm)
 slim_matrix_h  = 12;   // mm — 0.91" OLED PCB width (across wrist)
-slim_matrix_thk =  2;  // mm — PCB + glass stack height
+slim_matrix_thk =  3.6; // mm — measured 3.54mm (PCB + glass + back pads) + clearance
 slim_batt_len  = 31;   // mm — 301230 (30mm cell) + 1mm clearance
 slim_batt_wid  = 13;   // mm — 12mm LiPo + 1mm clearance
 slim_batt_thk  =  3.5; // mm — 3mm LiPo + 0.5mm clearance
@@ -100,10 +112,16 @@ win_r     = 2.5;  // mm — window corner radius
 win_recess= 0.5;  // mm — window recess depth
 
 /// ── Seeed XIAO ESP32-C3 pocket ────────────────────────────────
-// Seeed XIAO ESP32-C3 — 21×17.5mm — built-in LiPo charging
-esp_len   = 21.5; // Seeed XIAO ESP32-C3 + 0.5mm clearance
-esp_wid   = 18.0; // Seeed XIAO ESP32-C3 + 0.5mm clearance
-esp_thk   =  4.0; // XIAO + components clearance
+// Seeed XIAO ESP32-C3 — measured 22.39mm long (incl. USB-C connector
+// overhang) × ~17.5mm wide. Board is rotated 90° in the pocket below:
+// esp_len (the connector-bearing length axis) runs across-wrist (Y) to
+// meet the USB-C cutout in that wall; esp_wid runs along-arm (X), where
+// there's ample room (39mm interior vs 18mm needed).
+esp_len   = 23.0; // board length incl. USB-C connector (22.39mm) + clearance
+esp_wid   = 18.0; // Seeed XIAO ESP32-C3 width + 0.5mm clearance
+esp_thk   =  5.5; // XIAO + components — measured stack required more than the
+                   // original 4.0mm budget; extra absorbed here rather than
+                   // in the (well-specified) LiPo cell thickness
 usbc_w    =  9.0; // mm — USB-C port opening width
 usbc_h    =  4.0; // mm — USB-C port opening height
 
@@ -113,8 +131,12 @@ lug_ext    =  4.5; // mm — lug cap extension beyond body end
 bar_r      =  1.0; // mm — spring bar slot radius (slightly > 0.9mm pin for clearance)
 
 // ── Screw bosses (M1.6 × 5mm, screws enter from display face) ─
+// boss_h must reach near the parting line (top of bottom shell) or the
+// screw has nothing to bite into — bug found 2026-08-03: boss_h was a
+// fixed 3.0mm while bot_h was 9.0mm, leaving a 4.8mm dead-air gap the
+// screw couldn't bridge. Derive it from bot_h so this can't drift again.
 boss_r     = 1.6;
-boss_h     = 3.0;
+boss_h     = bot_h - floor_t - 0.1;
 screw_r    = 0.85;
 boss_inset = 4.0;
 
@@ -207,9 +229,12 @@ module bottom_shell() {
             rounded_box(body_len - 2*wall_t, body_wid - 2*wall_t,
                         bot_h, fillet_r - wall_t);
 
-        // XIAO ESP32-C3 pocket
-        translate([-esp_len/2, -esp_wid/2, floor_t - 0.1])
-            cube([esp_len, esp_wid, esp_thk + 0.1]);
+        // XIAO ESP32-C3 pocket — rotated 90° from a naive length-along-arm
+        // layout: esp_len (the connector-bearing dimension) runs across-wrist
+        // (Y) so the USB-C connector actually reaches the USB-C cutout below;
+        // esp_wid runs along-arm (X) where there's plenty of spare room.
+        translate([-esp_wid/2, -esp_len/2, floor_t - 0.1])
+            cube([esp_wid, esp_len, esp_thk + 0.1]);
 
         // LiPo pocket — stacked above XIAO
         translate([-batt_len/2, -batt_wid/2, floor_t + esp_thk])
@@ -241,21 +266,28 @@ module bottom_shell() {
 // ============================================================
 
 module assembly() {
+    // top_shell()'s local z=0 is its solid display face (window + screw
+    // holes) and z=top_h is the open rim that mates with the bottom shell —
+    // mirror before translating or the shell previews upside down (solid
+    // face buried at the parting line, open rim exposed at the very top)
     color("DimGray", 0.88)
-        translate([0, 0, bot_h])
-            top_shell();
+        translate([0, 0, bot_h + top_h])
+            mirror([0, 0, 1])
+                top_shell();
 
     color("SlateGray", 0.82)
         bottom_shell();
 
-    // Smoked acrylic window
+    // Smoked acrylic window — mirrored offset to match the corrected
+    // top_shell placement above (measuring inward from the exterior face
+    // at bot_h+top_h, same as the recess cut inside top_shell() itself)
     color("MidnightBlue", 0.35)
-        translate([0, 0, bot_h + wall_t - win_recess])
+        translate([0, 0, bot_h + top_h - wall_t + win_recess])
             rounded_window(win_w, win_h, win_r, 1.2);
 
     // OLED PCB
     color("ForestGreen", 0.8)
-        translate([0, 0, bot_h + wall_t])
+        translate([0, 0, bot_h + top_h - wall_t])
             cube([matrix_w, matrix_h, matrix_thk], center=true);
 
     // XIAO ESP32-C3 (bottom of interior)
@@ -295,11 +327,12 @@ else                       assembly();
 //   ESP32:       SuperMini 22.5 × 18mm ← MEASURE YOURS, update esp_len/esp_wid
 //
 // SLIM profile (DESIGN = "slim"):
-//   Body:        42 × 22 × 12.5mm  (along arm × across wrist × thick)
+//   Body:        42 × 27 × 15.8mm  (along arm × across wrist × thick)
 //   Window:      24 × 8mm  ← 0.91" 128×32 active area (landscape)
 //   Display:     0.91" SSD1306 OLED 128×32 — PCB 38×12mm, pins on short end
 //   Battery:     301230 LiPo (3mm × 12mm × 30mm, ~90mAh) stacked above XIAO
-//   XIAO:        ESP32-C3, 21×17.5mm — built-in LiPo charging via USB-C
+//   XIAO:        ESP32-C3, 22.39mm (incl. USB-C connector) × 17.5mm — rotated
+//                90° in its pocket so the connector reaches the USB-C cutout
 //   USB-C:       Side wall (body_wid face) — programs + charges
 //   Straps:      20mm quick-release spring bars (integrated tapered lug caps)
 //   Material:    TPU 95A recommended
