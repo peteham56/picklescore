@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>PickleScore Wristband v3.0 — Assembly Guide</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: Georgia, serif;
+    font-size: 11pt;
+    line-height: 1.5;
+    color: #111;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 24px 32px;
+  }
+  h1 {
+    font-size: 18pt;
+    border-bottom: 2px solid #111;
+    padding-bottom: 6px;
+    margin-bottom: 4px;
+  }
+  .subtitle {
+    font-size: 9pt;
+    color: #555;
+    margin-bottom: 20px;
+  }
+  h2 {
+    font-size: 13pt;
+    margin-top: 22px;
+    margin-bottom: 6px;
+    border-bottom: 1px solid #aaa;
+    padding-bottom: 3px;
+  }
+  h3 {
+    font-size: 11pt;
+    margin-top: 14px;
+    margin-bottom: 4px;
+  }
+  p { margin-bottom: 6px; }
+  ol, ul {
+    margin-left: 20px;
+    margin-bottom: 8px;
+  }
+  li { margin-bottom: 3px; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 8px 0 12px 0;
+    font-size: 10pt;
+  }
+  th {
+    background: #eee;
+    text-align: left;
+    padding: 4px 8px;
+    border: 1px solid #bbb;
+  }
+  td {
+    padding: 4px 8px;
+    border: 1px solid #ccc;
+    vertical-align: top;
+  }
+  .warning {
+    border-left: 3px solid #c00;
+    padding: 6px 10px;
+    margin: 8px 0;
+    background: #fff8f8;
+    font-size: 10pt;
+  }
+  .note {
+    border-left: 3px solid #555;
+    padding: 6px 10px;
+    margin: 8px 0;
+    background: #f8f8f8;
+    font-size: 10pt;
+  }
+  code {
+    font-family: "Courier New", monospace;
+    font-size: 10pt;
+    background: #f0f0f0;
+    padding: 0 3px;
+    border-radius: 2px;
+  }
+  pre {
+    font-family: "Courier New", monospace;
+    font-size: 10pt;
+    background: #f0f0f0;
+    border: 1px solid #ddd;
+    padding: 8px 12px;
+    margin: 8px 0;
+    line-height: 1.4;
+  }
+  .step-num {
+    display: inline-block;
+    background: #111;
+    color: #fff;
+    font-size: 9pt;
+    font-family: sans-serif;
+    font-weight: bold;
+    width: 20px;
+    height: 20px;
+    text-align: center;
+    line-height: 20px;
+    border-radius: 50%;
+    margin-right: 6px;
+    vertical-align: middle;
+  }
+  .step-header {
+    font-size: 12pt;
+    font-weight: bold;
+    margin-top: 18px;
+    margin-bottom: 6px;
+  }
+  @media print {
+    body { padding: 12px 18px; font-size: 10pt; }
+    h1 { font-size: 16pt; }
+    h2 { font-size: 12pt; page-break-after: avoid; }
+    .step-header { page-break-after: avoid; }
+    table { page-break-inside: avoid; }
+    .warning, .note { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<h1>PickleScore&#8482; &mdash; Wristband v3.0</h1>
+<div class="subtitle">Assembly Guide &mdash; revised August 2026 &mdash; body widened to 42&times;27&times;15.8mm (was 42&times;22&times;12.5mm) after a physical dry-fit found the screw bosses, component stack height, USB-C clearance, and OLED mount all undersized; adapted for JST 1.25mm pigtail connector swap</div>
+
+<h2>Bill of Materials</h2>
+<table>
+  <tr><th>#</th><th>Item</th><th>Qty</th><th>Spec / Notes</th></tr>
+  <tr><td>1</td><td>Seeed XIAO ESP32-C3</td><td>1</td><td>BLE scanner + built-in LiPo charger</td></tr>
+  <tr><td>2</td><td>OLED display</td><td>1</td><td>0.91&rdquo; SSD1306 I2C, 128&times;32 px</td></tr>
+  <tr><td>3</td><td>LiPo battery</td><td>1</td><td>301230 (3&times;12&times;30mm, ~90mAh) &mdash; after JST connector swap</td></tr>
+  <tr><td>4</td><td>JST 1.25mm SH pigtail cable</td><td>1</td><td>80mm, used to replace factory JST 2.0mm PH on LiPo</td></tr>
+  <tr><td>5</td><td>M1.6 &times; 5mm screw</td><td>4</td><td>Pan or flat head &mdash; hand driver only</td></tr>
+  <tr><td>6</td><td>20mm quick-release spring bar</td><td>2</td><td>Standard 20mm lug width</td></tr>
+  <tr><td>7</td><td>20mm silicone sport band</td><td>1</td><td>Any 20mm quick-release band</td></tr>
+  <tr><td>8</td><td>Hookup wire</td><td>~240mm</td><td>28&ndash;30 AWG &mdash; 4 wires &times; 60mm for I2C harness</td></tr>
+  <tr><td>9</td><td>Heatshrink or tape</td><td>small</td><td>For insulating connector swap joints</td></tr>
+</table>
+
+<h2>Printed Parts</h2>
+<table>
+  <tr><th>Part</th><th>SHOW setting</th><th>Print orientation</th><th>Material</th></tr>
+  <tr><td>Bottom shell</td><td><code>SHOW = "bottom"</code></td><td>Curved side down (add brim)</td><td>TPU 95A</td></tr>
+  <tr><td>Top shell</td><td><code>SHOW = "top"</code></td><td>Display window face down</td><td>TPU 95A</td></tr>
+</table>
+<p class="note">SCAD file: <code>ScadFiles/picklscore_wristband_v2.scad</code> &mdash; use <code>DESIGN = "slim"</code></p>
+
+<h2>Assembly Steps</h2>
+
+<div class="step-header"><span class="step-num">0</span> LiPo Connector Swap</div>
+<div class="warning"><strong>Do this first</strong> &mdash; the 301230 battery ships with a JST 2.0mm PH connector. The XIAO requires JST 1.25mm SH. The pigtail cable bridges the gap.</div>
+<ol>
+  <li>Cut the JST 2.0mm connector off the LiPo &mdash; leave ~20mm of wire on the cell side.</li>
+  <li>Note polarity: <strong>red = +, black = &minus;</strong>. Do not let leads touch.</li>
+  <li>Strip ~3mm on the LiPo leads and the pigtail bare ends.</li>
+  <li>Solder red-to-red, black-to-black. Heatshrink or tape each joint individually before letting them near each other.</li>
+  <li>Verify: plug the new JST 1.25mm end into the ESP32-C3 battery port &mdash; XIAO LED should glow. Unplug after confirming.</li>
+</ol>
+
+<div class="step-header"><span class="step-num">1</span> Flash Firmware</div>
+<p>If the XIAO ESP32-C3 was bench-tested previously, firmware may already be loaded. If not, connect via USB-C and upload <code>PickleScore_Wristband.ino</code> in Arduino IDE before the board goes into the shell.</p>
+
+<div class="step-header"><span class="step-num">2</span> Solder I2C Harness (OLED &rarr; XIAO)</div>
+<p>Cut 4 wires ~60mm. Solder one end to XIAO ESP32-C3 pads, other end to OLED 4-pin header.</p>
+<table>
+  <tr><th>XIAO pad</th><th>OLED pin</th></tr>
+  <tr><td>pin 6</td><td>SDA</td></tr>
+  <tr><td>pin 7</td><td>SCL</td></tr>
+  <tr><td>3.3V</td><td>VCC</td></tr>
+  <tr><td>GND</td><td>GND</td></tr>
+</table>
+<div class="note">Check your OLED module&rsquo;s pin label order before soldering &mdash; common order is GND / VCC / SCL / SDA left to right, but it varies by vendor.</div>
+
+<div class="step-header"><span class="step-num">3</span> Bottom Shell &mdash; Install XIAO</div>
+<div class="warning"><strong>Orientation is rotated 90&deg; from what you might expect:</strong> the board's long edge (the one with the USB-C connector) runs <em>across the wrist</em>, not along the arm &mdash; the connector needs to reach the port cutout in the side wall, and the integrated strap lugs leave no opening at the arm-direction ends.</div>
+<ol>
+  <li>Drop XIAO ESP32-C3 into the 18&times;23&times;5.5mm pocket with its long/USB-C edge running across the wrist, connector pointed at the side-wall port cutout.</li>
+  <li>Confirm USB-C port lines up with the 9&times;4mm cutout in the side wall.</li>
+</ol>
+
+<div class="step-header"><span class="step-num">4</span> Bottom Shell &mdash; Connect and Place LiPo</div>
+<ol>
+  <li>Plug the swapped JST 1.25mm connector into the XIAO battery port.</li>
+  <li>Lay the 301230 cell flat in the 31&times;13&times;3.5mm pocket on top of the XIAO.</li>
+</ol>
+
+<div class="step-header"><span class="step-num">5</span> Top Shell &mdash; Seat OLED</div>
+<ol>
+  <li>Slide the OLED PCB (38&times;12mm) between the two retaining rails on the underside of the top shell &mdash; the rails capture the top/bottom edges (across-wrist direction); the board is already a snug end-to-end fit along the arm direction on its own.</li>
+  <li>The active display area must sit directly over the 24&times;8mm window cutout.</li>
+  <li>OLED 4-pin header exits toward one short end.</li>
+</ol>
+
+<div class="step-header"><span class="step-num">6</span> Route Wires and Mate Shells</div>
+<ol>
+  <li>Arrange the 4-wire I2C harness so it loops neatly between shells, clear of all 4 screw boss locations.</li>
+  <li>Lower top shell onto bottom shell. Align the 4 boss holes. Press together.</li>
+</ol>
+
+<div class="step-header"><span class="step-num">7</span> Drive Screws</div>
+<p>Install 4&times; M1.6&times;5mm screws. <strong>Hand screwdriver only &mdash; stop at snug.</strong> Over-torquing strips TPU bosses.</p>
+
+<div class="step-header"><span class="step-num">8</span> Attach Strap</div>
+<ol>
+  <li>Insert 20mm quick-release spring bars through the lug channels on each end of the body.</li>
+  <li>Click the silicone sport band ends onto the spring bars.</li>
+</ol>
+
+<div class="step-header"><span class="step-num">9</span> Functional Test</div>
+<p>Power on via USB-C or LiPo. OLED should display:</p>
+<pre>A:00        B:00
+Srv:A  #2</pre>
+<p>Once ThroatPod is assembled, press its buttons and confirm the Wristband display updates correctly.</p>
+
+<h2>Critical Notes</h2>
+<ul>
+  <li><strong>JST polarity:</strong> Always double-check red = + before plugging in. Reversed polarity will damage the XIAO.</li>
+  <li><strong>TPU screws:</strong> M1.6 bosses in TPU strip easily. Never use a powered driver. Stop the moment resistance increases. Screws are still M1.6&times;5mm &mdash; the August 2026 fix corrected the boss height, not the screw length.</li>
+  <li><strong>I2C address:</strong> OLED is at 0x3C. If display stays blank after power-on, check SDA/SCL are not swapped.</li>
+  <li><strong>Wire routing:</strong> If a wire crosses a screw boss it will get pinched when the shells close &mdash; check before mating shells.</li>
+  <li><strong>Body size:</strong> now 42&times;27&times;15.8mm, up from the original 42&times;22&times;12.5mm slim target &mdash; a physical dry-fit of the actual XIAO/LiPo/OLED stack (and the USB-C connector's length) needed more room than the original design budgeted. See <code>picklscore_wristband_v2.scad</code> header comments for the full before/after breakdown.</li>
+</ul>
+
+</body>
+</html>
