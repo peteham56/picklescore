@@ -172,6 +172,29 @@ module screw_boss(x, y, z_base) {
         }
 }
 
+// OLED PCB retaining rails — locate the board so its active area stays
+// aligned with the window. The assembly guide has always said "press the
+// OLED into the 38×12mm pocket," but no such pocket was ever actually cut
+// here (found 2026-08-03) — without it the PCB has nothing to register
+// against inside the widened top shell and can drift enough to misalign
+// the window. Rails only run along the across-wrist (Y) edges: the
+// along-arm (X) direction is already snug on its own (38mm PCB in a
+// 39mm-wide interior — a 4-sided frame doesn't fit there, only ~0.5mm
+// clearance per side). Standoff height leaves the rest of the 3.8mm
+// interior hollow depth free for the PCB body/solder pads.
+oled_frame_clear = 0.4; // mm — clearance around the PCB edges
+oled_frame_wall  = 1.5; // mm — rail thickness
+oled_frame_h     = 1.2; // mm — how far the rails stand proud of the cap
+
+module oled_frame() {
+    rail_len = matrix_w + oled_frame_clear;
+    for (sy = [-1, 1])
+        translate([0,
+                   sy * (matrix_h/2 + oled_frame_clear/2 + oled_frame_wall/2),
+                   wall_t])
+            rounded_box(rail_len, oled_frame_wall, oled_frame_h, 0.4);
+}
+
 // ============================================================
 // TOP SHELL
 // ============================================================
@@ -199,6 +222,9 @@ module top_shell() {
                        by*(body_wid/2 - boss_inset), -0.1])
                 cylinder(r=screw_r + 0.1, h=wall_t + 0.2, $fn=16);
     }
+
+    // OLED PCB retaining frame (see module comment above)
+    oled_frame();
 }
 
 // ============================================================
