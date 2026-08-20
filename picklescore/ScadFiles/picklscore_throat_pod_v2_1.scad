@@ -45,7 +45,12 @@ SHOW = "top";   // "assembly" | "top" | "bottom"
 // Trapezoid: wide at top (paddle face level), narrow at bottom (grip)
 pod_h      = 24;    // mm — XIAO long side (21mm) along height; needs 22mm + margin
 pod_top_w  = 47.0;  // mm — measured: 65mm total paddle width − 2×9mm lips at 24mm height
-pod_bot_w  = 28.0;  // mm — XIAO short side (17.5mm) along width; min ~21.6mm, 28mm verified fine
+pod_bot_w  = 30.0;  // mm — widened from 28mm 2026-08-20: at 28mm the lower screw
+                     // bosses (x=±9, same formula as xiao_wid/2=9) sat flush against
+                     // the XIAO pocket edge with zero clearance — inserting the rigid
+                     // board flexed/bent the boss sideways, throwing off the lower
+                     // screw holes relative to the top shell. 30mm gives room to move
+                     // the bosses clear (see boss_inset_x_bot below).
 pod_thk    = 11.3;  // mm — floor(1.5) + XIAO(4) + LiPo(3.5) + top(1.8) stacked
 
 // ── Shell thicknesses ────────────────────────────────────────
@@ -128,7 +133,11 @@ pad_depth  = 0.4;  // mm — recess depth (0.4mm leaves 0.8mm floor, no fiber bl
 boss_r     = 1.8;
 boss_h     = 7.5;  // reaches near parting plane so top-entry screws engage immediately
 screw_r    = 0.85;
-boss_inset_x = 5.0;  // mm from left/right edge
+boss_inset_x     = 5.0;  // mm from left/right edge — TOP row only (pod_top_w=47, no XIAO conflict)
+// BOTTOM row: xiao_wid=18mm pocket occupies x=-9..+9. Boss must clear that edge
+// by boss_r + margin, i.e. center at >= 9 + 1.8 + 1.0 = 11.8mm. With the widened
+// pod_bot_w=30mm (half=15), that's boss_inset_x_bot = 15 - 11.8 = 3.2mm.
+boss_inset_x_bot = 3.2;  // mm from left/right edge — BOTTOM row (clears XIAO pocket, see pod_bot_w note above)
 boss_inset_y = 5.0;  // mm from top/bottom edge
 
 // ── Fillet radius ─────────────────────────────────────────────
@@ -247,7 +256,7 @@ module top_shell() {
         for (sx = [-1, 1]) {
             translate([sx*(pod_top_w/2 - boss_inset_x),  pod_h/2 - boss_inset_y, -0.1])
                 cylinder(r=screw_r + 0.1, h=top_t + 1.6 + 0.2, $fn=16);
-            translate([sx*(pod_bot_w/2 - boss_inset_x), -(pod_h/2 - boss_inset_y), -0.1])
+            translate([sx*(pod_bot_w/2 - boss_inset_x_bot), -(pod_h/2 - boss_inset_y), -0.1])
                 cylinder(r=screw_r + 0.1, h=top_t + 1.6 + 0.2, $fn=16);
         }
     }
@@ -319,8 +328,8 @@ module bottom_shell() {
     // Screw bosses at 4 corners (adapting to taper)
     screw_boss(-(pod_top_w/2 - boss_inset_x),  pod_h/2 - boss_inset_y,  floor_t);
     screw_boss( (pod_top_w/2 - boss_inset_x),  pod_h/2 - boss_inset_y,  floor_t);
-    screw_boss(-(pod_bot_w/2 - boss_inset_x), -(pod_h/2 - boss_inset_y), floor_t);
-    screw_boss( (pod_bot_w/2 - boss_inset_x), -(pod_h/2 - boss_inset_y), floor_t);
+    screw_boss(-(pod_bot_w/2 - boss_inset_x_bot), -(pod_h/2 - boss_inset_y), floor_t);
+    screw_boss( (pod_bot_w/2 - boss_inset_x_bot), -(pod_h/2 - boss_inset_y), floor_t);
 }
 
 // ============================================================

@@ -38,7 +38,7 @@
 // ============================================================
 
 DESIGN = "slim";  // "prototype" | "slim"
-SHOW   = "bottom";   // "assembly"  | "top" | "bottom"
+SHOW   = "assembly";   // "assembly"  | "top" | "bottom"
 
 // ============================================================
 // PROFILE PARAMETERS
@@ -362,7 +362,10 @@ else                       assembly();
 //   USB-C:       Side wall (body_wid face) — programs + charges
 //   Straps:      20mm quick-release spring bars (integrated tapered lug caps)
 //   Material:    TPU 95A recommended
-//   Assembly:    4× M1.6 × 5mm screws — enter from display face, self-tap into bottom bosses
+//   Assembly:    4× M1.6 × 8mm screws — enter from display face, self-tap into bottom bosses
+//                (5mm/6mm both proved too short in practice 2026-08-20 — shells likely
+//                 don't mate perfectly flush given the internal stack is near its budget;
+//                 boss_h=9.2mm has plenty of depth for 8mm with margin)
 //
 // SHARED:
 //   Wall:        1.5mm all sides
