@@ -362,10 +362,13 @@ else                       assembly();
 //   USB-C:       Side wall (body_wid face) — programs + charges
 //   Straps:      20mm quick-release spring bars (integrated tapered lug caps)
 //   Material:    TPU 95A recommended
-//   Assembly:    4× M1.6 × 8mm screws — enter from display face, self-tap into bottom bosses
-//                (5mm/6mm both proved too short in practice 2026-08-20 — shells likely
-//                 don't mate perfectly flush given the internal stack is near its budget;
-//                 boss_h=9.2mm has plenty of depth for 8mm with margin)
+//   Assembly:    4× M1.6 × 10mm screws — enter from display face, self-tap into bottom bosses
+//                (5mm/6mm/8mm all too short in practice — the screw clearance hole in
+//                 top_shell() sits over the HOLLOW OLED cavity, not solid wall: the shank
+//                 has to cross the full top_h=5.3mm (1.5mm cap + 3.8mm open cavity) as dead
+//                 travel before it even reaches the bottom shell's boss to start threading.
+//                 10mm gives ~4.7mm real engagement into the 9.2mm-deep boss, well short of
+//                 bottoming out)
 //
 // SHARED:
 //   Wall:        1.5mm all sides
